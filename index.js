@@ -192,6 +192,9 @@ RedisClient.connection_id = 0;
 
 function create_parser (self) {
     return new Parser({
+        pushReply: function (data) {
+            self.return_reply(data);
+        },
         returnReply: function (data) {
             self.return_reply(data);
         },
@@ -716,6 +719,12 @@ RedisClient.prototype.emit_idle = function () {
 };
 
 function normal_reply (self, reply) {
+    if (Array.isArray(reply)) {
+        if (reply[0] === 'invalidate') {
+            return self.emit("message", reply);
+        }
+    }
+
     var command_obj = self.command_queue.shift();
     if (typeof command_obj.callback === 'function') {
         if (command_obj.command !== 'exec') {
